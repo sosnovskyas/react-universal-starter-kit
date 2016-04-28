@@ -13,10 +13,12 @@
 
 ## Install ##
 Для установки проекта необходимо клонировать репозиторий с GitHub и установить зависимости.
+
 ```
 $ git clone https://github.com/sosnovskyas/react-universal-starter-kit.git <project-name>
 $ cd <project-name>
 $ npm install
 ```
+
 ВНИМАНИЕ!!!
 для установки и работы у Вас в системе должен быть установлен пакет NodeJS (за подробностями обратитесь на сайт вендора https://nodejs.org/) и его пакетный менеджер NPM (при нормальных условиях по умолчанию устанавливается вместе с NodeJS).
