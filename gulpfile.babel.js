@@ -6,6 +6,7 @@ import plumber from "gulp-plumber";
 import notify from "gulp-notify";
 import browserSync from "browser-sync";
 import webpackStream from "webpack-stream";
+import nodemon from "gulp-nodemon";
 
 const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
 const webpack = webpackStream.webpack;
@@ -59,12 +60,46 @@ options.plugins = [
   new webpack.NoErrorsPlugin()
 ];
 
+/*
+*   TASKS
+* */
+
+// nodemon
+gulp.task('nodemon', function (callback) {
+  let started = false;
+  return nodemon({
+    script: './dist/server.js',
+    ext: '*.js *.jsx'
+  })
+    .on('start', function () {
+      if (!started) {
+        started = true;
+        setTimeout(function reload() {
+            callback();
+          },
+          500
+        );
+      }
+    })
+    .on('restart', function onRestart() {
+      setTimeout(function reload() {
+          browserSync.reload({
+            stream: false
+          });
+        },
+        500
+      );
+    });
+});
 
 // serve
-gulp.task('serve', () => {
+gulp.task('browsersync', ['nodemon'], function () {
   browserSync.init({
-    server: paths.dest.client
-  })
+    proxy: "http://localhost:5000",
+    files: ["./dist/**/*"],
+    browser: "google chrome",
+    port: 3000
+  });
 });
 
 // assets
@@ -83,10 +118,7 @@ gulp.task('js:client', (callback)=> {
     if (err) {
       return;
     }
-
-    console.log('DONE');
-    // every changes
-    browserSync.reload();
+    console.log('DONE', stats);
   }
 
   // developer options
@@ -136,17 +168,12 @@ gulp.task('js:server', (callback)=> {
   let first = false;
 
   function done(err, stats) {
-    // first = true;
     if (err) {
       return;
     }
-
-    console.log('DONE');
-    // every changes
-    browserSync.reload();
+    console.log('DONE', stats);
   }
-
-  // task
+  
   return gulp.src(paths.client.js)
     .pipe(plumber({
       errorHandler: notify.onError(err=>({
@@ -168,5 +195,5 @@ gulp.task('default', [
   'js:client',
   'js:server',
   'assets',
-  'serve'
+  'browsersync'
 ]);
