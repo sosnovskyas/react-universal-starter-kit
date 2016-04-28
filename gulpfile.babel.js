@@ -16,7 +16,7 @@ let paths = {
   src: 'src',
   dest: {
     client: 'dist/public',
-    server: 'dist/server'
+    server: 'dist'
   },
   assets: 'src/assets/**'
 };
@@ -110,42 +110,15 @@ gulp.task('assets', () => {
 
 // JS
 gulp.task('js:client', (callback)=> {
-  let options;
   let first = false;
 
-  function done(err, stats) {
+  function done(err/*, stats*/) {
     // first = true;
     if (err) {
       return;
     }
-    console.log('DONE', stats);
+    // console.log('DONE', stats);
   }
-
-  // developer options
-  options = {
-    watch: isDevelopment,
-    devtool: isDevelopment ? 'cheap-module-inline-source-map' : null
-  };
-
-  // filenames
-  options.output = {
-    filename: 'bundle.js'
-  };
-
-  // modules
-  options.module = {
-    loaders: [{
-      test: /\.js$/,
-      exclude: /node_modules/,
-      include: path.join(__dirname, paths.src),
-      loader: 'babel'
-    }]
-  };
-
-  // plugins
-  options.plugins = [
-    new webpack.NoErrorsPlugin()
-  ];
 
   // task
   return gulp.src(paths.client.js)
@@ -164,17 +137,16 @@ gulp.task('js:client', (callback)=> {
     })
 });
 gulp.task('js:server', (callback)=> {
-
   let first = false;
 
-  function done(err, stats) {
+  function done(err/*, stats*/) {
     if (err) {
       return;
     }
-    console.log('DONE', stats);
+    // console.log('DONE', stats);
   }
-  
-  return gulp.src(paths.client.js)
+
+  return gulp.src(paths.server.js)
     .pipe(plumber({
       errorHandler: notify.onError(err=>({
         title: 'Webpack',
@@ -182,7 +154,7 @@ gulp.task('js:server', (callback)=> {
       }))
     }))
     .pipe(webpackStream(options, null, done))
-    .pipe(gulp.dest(paths.dest.client))
+    .pipe(gulp.dest(paths.dest.server))
     .on('data', ()=> {
       if (first) {
         callback();
