@@ -1,7 +1,7 @@
 {
-  "name": "react-ru-tutorial",
+  "name": "REACT-ROUTING-starter-kit",
   "version": "1.0.0",
-  "description": "React RU tutorial",
+  "description": "REACT-ROUTING starter-kit",
   "main": "index.html",
   "scripts": {
     "start": "node server.js"
@@ -21,11 +21,14 @@
     "del": "^2.2.0",
     "gulp": "3.9.1",
     "gulp-babel": "6.1.2",
+    "gulp-if": "^2.0.0",
     "gulp-nodemon": "^2.0.6",
     "gulp-notify": "2.2.0",
     "gulp-plumber": "1.1.0",
+    "gulplog": "^1.0.0",
     "react": "15.0.1",
     "react-dom": "15.0.1",
+    "vinyl-named": "^1.1.0",
     "webpack-stream": "3.2.0"
   }
 }
