@@ -4,6 +4,7 @@ import gulp from "gulp";
 import gulplog from "gulplog";
 import path from "path";
 import del from "del";
+import fs from "fs";
 import gulpIf from "gulp-if";
 import named from "vinyl-named";
 import plumber from "gulp-plumber";
@@ -11,6 +12,7 @@ import notify from "gulp-notify";
 import browserSync from "browser-sync";
 import webpackStream from "webpack-stream";
 import nodemon from "gulp-nodemon";
+import gulpSequence from "gulp-sequence";
 
 const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
 const webpack = webpackStream.webpack;
@@ -65,11 +67,11 @@ options.plugins = [
 ];
 
 /*
-*   TASKS
-* */
+ *   TASKS
+ * */
 
 // CLEAN
-gulp.task('clean', function() {
+gulp.task('clean', function () {
   return del(['dist']);
 });
 
@@ -117,62 +119,8 @@ gulp.task('assets', () => {
     .pipe(gulp.dest(paths.dest.client))
 });
 
-// JS
-gulp.task('js:client', (callback)=> {
-  let first = false;
-
-  function done(err/*, stats*/) {
-    // first = true;
-    if (err) {
-      return;
-    }
-    // console.log('DONE', stats);
-  }
-
-  // task
-  return gulp.src(paths.client.js)
-    .pipe(plumber({
-      errorHandler: notify.onError(err=>({
-        title: 'Webpack',
-        message: err.message
-      }))
-    }))
-    .pipe(webpackStream(options, null, done))
-    .pipe(gulp.dest(paths.dest.client))
-    .on('data', ()=> {
-      if (first) {
-        callback();
-      }
-    })
-});
-gulp.task('js:server', (callback)=> {
-  let first = false;
-
-  function done(err/*, stats*/) {
-    if (err) {
-      return;
-    }
-    // console.log('DONE', stats);
-  }
-
-  return gulp.src(paths.server.js)
-    .pipe(plumber({
-      errorHandler: notify.onError(err=>({
-        title: 'Webpack',
-        message: err.message
-      }))
-    }))
-    .pipe(webpackStream(options, null, done))
-    .pipe(gulp.dest(paths.dest.server))
-    .on('data', ()=> {
-      if (first) {
-        callback();
-      }
-    })
-});
-
 // WEBPACK
-gulp.task('webpack:client', function(callback) {
+gulp.task('webpack:client', (callback) => {
   let firstBuildReady = false;
 
   function done(err, stats) {
@@ -194,13 +142,13 @@ gulp.task('webpack:client', function(callback) {
       // filename: isDevelopment ? '[name].js' : '[name]-[chunkhash:10].js'
       filename: 'bundle.js'
     },
-    watch:   isDevelopment,
+    watch: isDevelopment,
     devtool: isDevelopment ? 'cheap-module-inline-source-map' : null,
-    module:  {
+    module: {
       loaders: [{
-        test:    /\.js$/,
+        test: /\.js$/,
         include: path.join(__dirname, "src"),
-        loader:  'babel?presets[]=es2015'
+        loader: 'babel?presets[]=es2015'
       }]
     },
     plugins: [
@@ -208,10 +156,10 @@ gulp.task('webpack:client', function(callback) {
     ]
   };
 
-  if (!isDevelopment) {
+  /*if (!isDevelopment) {
     options.plugins.push(new AssetsPlugin({
       filename: 'webpack.json',
-      path:     __dirname + '/manifest',
+      path: __dirname + '/manifest',
       processOutput(assets) {
         for (let key in assets) {
           assets[key + '.js'] = assets[key].js.slice(options.output.publicPath.length);
@@ -220,12 +168,12 @@ gulp.task('webpack:client', function(callback) {
         return JSON.stringify(assets);
       }
     }));
-  }
+  }*/
 
   return gulp.src('src/client/index.js')
     .pipe(plumber({
       errorHandler: notify.onError(err => ({
-        title:   'Webpack',
+        title: 'Webpack',
         message: err.message
       }))
     }))
@@ -233,14 +181,14 @@ gulp.task('webpack:client', function(callback) {
     .pipe(webpackStream(options, null, done))
     // .pipe(gulpIf(!isDevelopment, uglify()))
     .pipe(gulp.dest('dist/public'))
-    .on('data', function() {
+    .on('data', function () {
       if (firstBuildReady) {
         callback();
       }
     });
 
 });
-gulp.task('webpack:server', function(callback) {
+gulp.task('webpack:server', (callback) => {
   let firstBuildReady = false;
 
   function done(err, stats) {
@@ -262,24 +210,38 @@ gulp.task('webpack:server', function(callback) {
       // filename: isDevelopment ? '[name].js' : '[name]-[chunkhash:10].js'
       filename: 'server.js'
     },
-    watch:   isDevelopment,
+    watch: isDevelopment,
     devtool: isDevelopment ? 'cheap-module-inline-source-map' : null,
-    module:  {
+    module: {
       loaders: [{
-        test:    /\.js$/,
+        test: /\.js$/,
         include: path.join(__dirname, "src"),
-        loader:  'babel?presets[]=es2015'
+        loader: 'babel?presets[]=es2015'
       }]
     },
     plugins: [
       new webpack.NoErrorsPlugin()
-    ]
+    ],
+
+    // !!! ОЧЕНЬ ВАЖНАЯ ФИЧА
+    // необходимо для того чтобы заимпортить express
+    // у неё есть бинарные зависимости которые webpack
+    // не может просто так заинклюдить
+    externals: fs.readdirSync(path.resolve(__dirname, 'node_modules'))
+      .concat(['react-dom/server'])
+      .reduce(function (ext, mod) {
+          ext[mod] = 'commonjs ' + mod;
+          return ext
+        },
+        {})
+
   };
 
+  /*
   if (!isDevelopment) {
     options.plugins.push(new AssetsPlugin({
       filename: 'webpack.json',
-      path:     __dirname + '/manifest',
+      path: __dirname + '/manifest',
       processOutput(assets) {
         for (let key in assets) {
           assets[key + '.js'] = assets[key].js.slice(options.output.publicPath.length);
@@ -289,11 +251,12 @@ gulp.task('webpack:server', function(callback) {
       }
     }));
   }
+  */
 
   return gulp.src('src/server/index.js')
     .pipe(plumber({
       errorHandler: notify.onError(err => ({
-        title:   'Webpack',
+        title: 'Webpack',
         message: err.message
       }))
     }))
@@ -301,7 +264,7 @@ gulp.task('webpack:server', function(callback) {
     .pipe(webpackStream(options, null, done))
     // .pipe(gulpIf(!isDevelopment, uglify()))
     .pipe(gulp.dest('dist'))
-    .on('data', function() {
+    .on('data', function () {
       if (firstBuildReady) {
         callback();
       }
@@ -309,13 +272,12 @@ gulp.task('webpack:server', function(callback) {
 });
 
 // DEFAULT
-gulp.task('default', [
-  // 'js:client',
-  // 'js:server',
-  // 'clean',
-  // 'webpack:client',
-  'webpack:server',
-  'nodemon'
-  // 'assets',
-  // 'browsersync'
-]);
+gulp.task('default', gulpSequence(
+  'clean',
+  [
+    'webpack:client',
+    'webpack:server',
+    'assets'
+  ],
+  'browsersync'
+));
