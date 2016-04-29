@@ -2,6 +2,7 @@
 
 import gulp from "gulp";
 import path from "path";
+import del from "del";
 import plumber from "gulp-plumber";
 import notify from "gulp-notify";
 import browserSync from "browser-sync";
@@ -63,6 +64,11 @@ options.plugins = [
 /*
 *   TASKS
 * */
+
+// CLEAN
+gulp.task('clean', function() {
+  return del(['public', 'manifest']);
+});
 
 // nodemon
 gulp.task('nodemon', function (callback) {
