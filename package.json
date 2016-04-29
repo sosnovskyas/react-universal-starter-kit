@@ -1,10 +1,10 @@
 {
   "name": "REACT-ROUTING-starter-kit",
   "version": "1.0.0",
-  "description": "REACT-ROUTING starter-kit",
-  "main": "index.html",
+  "description": "react-universal",
+  "main": "gulpfile.babel.html",
   "scripts": {
-    "start": "node server.js"
+    "start": "gulp"
   },
   "author": "Sosnovsky Alexey",
   "license": "MIT",
